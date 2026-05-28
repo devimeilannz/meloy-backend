@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  CUSTOMER
+}
+
+enum BookingStatus {
+  pending
+  waiting_payment
+  paid
+  on_progress
+  completed
+  cancelled
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+
+  pets      Pet[]
+  bookings  Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Pet {
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String
+
+  userId    Int
+  user      User @relation(fields: [userId], references: [id])
+
+  bookings  Booking[]
+
+  createdAt DateTime @default(now())
+}
+ 
+ model GroomingPackage {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Int
+  description String
+
+  bookings    Booking[]
+}
+
+model Booking {
+  id          Int      @id @default(autoincrement())
+
+  userId      Int
+  petId       Int
+  packageId   Int
+
+  tanggal     DateTime
+  jam         String
+
+ status BookingStatus @default(pending)
+
+  user        User @relation(fields: [userId], references: [id])
+  pet         Pet @relation(fields: [petId], references: [id])
+  package     GroomingPackage @relation(fields: [packageId], references: [id])
+ 
+
+  transaksi   Transaksi?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Transaksi {
+  id          Int      @id @default(autoincrement())
+
+  bookingId   Int      @unique
+  total       Int
+
+  proof       String?
+
+  booking     Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt   DateTime @default(now())
+}

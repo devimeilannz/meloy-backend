@@ -6,14 +6,15 @@ import {
   Patch,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 
 import { FileInterceptor }
 from '@nestjs/platform-express';
 
-import { CloudinaryService }
-from 'src/cloudinary/cloudinary.service';
+import { JwtAuthGuard }
+from 'src/helper/jwt-auth.guard';
 
 import { TransaksiService }
 from './transaksi.service';
@@ -21,87 +22,68 @@ from './transaksi.service';
 import { UpdateStatusDto }
 from './dto/update-status.dto';
 
-@Controller('transaksi')
+import {Roles} from 'src/helper/roles.decorator';
 
+import { RolesGuard }
+from 'src/helper/roles-guard';
+
+@Controller('transaksi')
 export class TransaksiController {
 
   constructor(
-
     private transaksiService:
       TransaksiService,
-
-    private cloudinaryService:
-      CloudinaryService,
   ) {}
 
-  // GET ALL
-  @Get()
+  // GET ALL TRANSAKSI
+  @UseGuards(
+  JwtAuthGuard,
+  RolesGuard,
+)
+@Roles('SUPER_ADMIN')
+@Get()
+findAll() {
+  return this.transaksiService.findAll();
+}
 
-  findAll() {
-
-    return this.transaksiService.findAll();
-  }
-
-  // GET DETAIL
+  // GET DETAIL TRANSAKSI
   @Get(':id')
-
+  @UseGuards(JwtAuthGuard)
   findOne(
     @Param('id') id: string,
   ) {
-
     return this.transaksiService.findOne(
       +id,
     );
   }
 
-  // CREATE TRANSAKSI
+  // CREATE TRANSAKSI + UPLOAD BUKTI
   @Post()
-
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('proof', {
+      dest: './uploads',
+    }),
+  )
   create(
     @Body() body: any,
-  ) {
-
-    return this.transaksiService.create(
-      body,
-    );
-  }
-
-  // UPLOAD BUKTI
-  @Post('upload/:bookingId')
-
-  @UseInterceptors(
-    FileInterceptor('file'),
-  )
-
-  async uploadProof(
-
-    @Param('bookingId')
-    bookingId: string,
 
     @UploadedFile()
     file: Express.Multer.File,
   ) {
 
-    const result =
-      await this.cloudinaryService.uploadFile(
-        file.path,
-      );
+    console.log(file);
 
-    return this.transaksiService.create({
-
-      bookingId:
-        Number(bookingId),
-
-      total: 50000,
-
-      proof:
-        result.secure_url,
-    });
+    return this.transaksiService.create(
+      body,
+      file,
+    );
   }
 
-  // UPDATE STATUS
+  // UPDATE STATUS TRANSAKSI
   @Patch(':id/status')
-
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   updateStatus(
 
     @Param('id')
@@ -112,9 +94,7 @@ export class TransaksiController {
   ) {
 
     return this.transaksiService.updateStatus(
-
       +id,
-
       body.status,
     );
   }

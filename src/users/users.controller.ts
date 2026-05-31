@@ -1,58 +1,36 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
-  Patch,
+  UseGuards,
 } from '@nestjs/common';
 
 import { UsersService }
 from './users.service';
 
+import { JwtAuthGuard }
+from 'src/helper/jwt-auth.guard';
+
+import {Roles} from 'src/helper/roles.decorator';
+
+import { RolesGuard }
+from 'src/helper/roles-guard';
+
+
 @Controller('users')
 export class UsersController {
-
-  constructor(
-    private usersService: UsersService,
+constructor(
+    private usersService:
+      UsersService,
   ) {}
 
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+  )
+  @Roles('SUPER_ADMIN')
   @Get()
   findAll() {
 
     return this.usersService.findAll();
-  }
-
-  @Get(':id')
-  findOne(
-    @Param('id') id: string,
-  ) {
-
-    return this.usersService.findOne(
-      +id,
-    );
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-
-    @Body() body: any,
-  ) {
-
-    return this.usersService.update(
-      +id,
-      body,
-    );
-  }
-
-  @Delete(':id')
-  remove(
-    @Param('id') id: string,
-  ) {
-
-    return this.usersService.remove(
-      +id,
-    );
   }
 }

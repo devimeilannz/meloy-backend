@@ -40,13 +40,14 @@ export class AuthService {
       );
 
     const user =
-      await this.prisma.user.create({
-        data: {
-          username: data.username,
-          email: data.email,
-          password: hashed,
-        },
-      });
+  await this.prisma.user.create({
+    data: {
+      username: data.username,
+      email: data.email,
+      password: hashed,
+      role: 'CUSTOMER',
+    },
+  });
 
     return user;
   }

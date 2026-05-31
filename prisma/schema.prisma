@@ -39,6 +39,7 @@ model Pet {
   id        Int      @id @default(autoincrement())
   name      String
   type      String
+  age      Int
 
   userId    Int
   user      User @relation(fields: [userId], references: [id])

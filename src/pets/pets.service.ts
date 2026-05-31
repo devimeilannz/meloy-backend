@@ -10,10 +10,13 @@ export class PetsService {
     private prisma: PrismaService,
   ) {}
 
-  create(data: any) {
+  create(data: any, user: any) {
 
     return this.prisma.pet.create({
-      data,
+      data: {
+        ...data,
+        userId: user.id,
+      },
     });
   }
 

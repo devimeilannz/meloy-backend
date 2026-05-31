@@ -28,9 +28,9 @@ export class RolesGuard
 
     const request =
       context.switchToHttp().getRequest();
-
+const user = request.user;
     return roles.includes(
-      request.user.role,
+      user.role,
     );
   }
 }

@@ -10,53 +10,52 @@ import {
 import { PrismaService }
 from 'src/prisma/prisma.service';
 
+import { CloudinaryService }
+from 'src/cloudinary/cloudinary.service';
+
 @Injectable()
 export class TransaksiService {
 
   constructor(
     private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   // CREATE TRANSAKSI
-  async create(data: any) {
+  async create(
+  data: any,
+  file: Express.Multer.File,
+) {
 
-    const bookingId =
-      Number(data.bookingId);
+  const upload =
+    await this.cloudinaryService
+      .uploadFile(file.path);
 
-    // UPDATE STATUS BOOKING
-    await this.prisma.booking.update({
+  return this.prisma.transaksi.create({
+    data: {
+      bookingId:
+        Number(data.bookingId),
 
-      where: {
-        id: bookingId,
-      },
+      total:
+        Number(data.total),
 
-      data: {
-        status:
-          BookingStatus.waiting_payment,
-      },
-    });
-
-    return this.prisma.transaksi.create({
-
-      data: {
-        bookingId,
-        total: Number(data.total),
-        proof: data.proof,
-      },
-    });
-  }
+      proof:
+        upload.secure_url,
+    },
+  });
+}
 
   // UPDATE STATUS
   async updateStatus(
     id: number,
-    status: BookingStatus,
+    status: string,
   ) {
 
     const transaksi =
       await this.prisma.transaksi.findUnique({
 
         where: {
-          id: Number(id),
+          id,
         },
       });
 
@@ -74,7 +73,7 @@ export class TransaksiService {
       },
 
       data: {
-        status,
+        status: status as any,
       },
     });
   }

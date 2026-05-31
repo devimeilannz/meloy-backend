@@ -3,11 +3,11 @@ import {
   Controller,
   Get,
   Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 
 import { PetsService } from './pets.service';
-import { UseGuards }
-from '@nestjs/common';
 
 import { JwtAuthGuard }
 from 'src/helper/jwt-auth.guard';
@@ -19,18 +19,25 @@ export class PetsController {
     private petsService: PetsService,
   ) {}
 
+  
   @Post()
-  create(@Body() body: any) {
+  @UseGuards(JwtAuthGuard)
+  create(
+    @Body() body: any,
+    @Request() req,
+  ) {
 
-    return this.petsService.create(body);
+    return this.petsService.create(
+      body,
+      req.user,
+    );
   }
+
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  findAll() {
 
-@UseGuards(JwtAuthGuard)
-
-findAll() {
-
-  return this.petsService.findAll();
-}
+    return this.petsService.findAll();
   }
+}

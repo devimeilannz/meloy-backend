@@ -53,7 +53,6 @@ export class BookingService {
 
         userId: Number(user.id),
         petId: Number(data.petId),
-
         packageId: Number(data.packageId),
 
         status: 'pending',
@@ -74,6 +73,123 @@ export class BookingService {
         pet: true,
         package: true,
         transaksi: true,
+      },
+    });
+  }
+
+  async findOne(
+  id: number,
+) {
+
+  if (isNaN(id)) {
+    throw new BadRequestException(
+      'ID booking tidak valid',
+    );
+  }
+
+  const booking =
+    await this.prisma.booking.findUnique({
+      where: {
+        id,
+      },
+
+      include: {
+        user: true,
+        pet: true,
+        package: true,
+        transaksi: true,
+      },
+    });
+
+  if (!booking) {
+    throw new NotFoundException(
+      'Booking tidak ditemukan',
+    );
+  }
+
+  return booking;
+}
+
+  async history(
+    userId: number,
+  ) {
+
+    return this.prisma.booking.findMany({
+      where: {
+        userId,
+      },
+
+      include: {
+        pet: true,
+        package: true,
+        transaksi: true,
+      },
+
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async availableSlot(
+  tanggal: string,
+) {
+
+  const jams = [
+    '08:00',
+    '10:00',
+    '13:00',
+    '15:00',
+  ];
+
+  const result: {
+    jam: string;
+    sisa: number;
+  }[] = [];
+
+  for (const jam of jams) {
+
+    const total =
+      await this.prisma.booking.count({
+        where: {
+          tanggal: new Date(tanggal),
+          jam,
+        },
+      });
+
+    result.push({
+      jam,
+      sisa: 5 - total,
+    });
+  }
+
+  return result;
+}
+
+  async cancel(
+    id: number,
+  ) {
+
+    const booking =
+      await this.prisma.booking.findUnique({
+        where: {
+          id,
+        },
+      });
+
+    if (!booking) {
+      throw new NotFoundException(
+        'Booking tidak ditemukan',
+      );
+    }
+
+    return this.prisma.booking.update({
+      where: {
+        id,
+      },
+
+      data: {
+        status: 'cancelled',
       },
     });
   }

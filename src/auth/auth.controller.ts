@@ -1,11 +1,15 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 
 import { AuthService }
 from './auth.service';
+import { JwtAuthGuard } from 'src/helper/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -24,4 +28,20 @@ export class AuthController {
 login(@Body() body: any) {
   return this.authService.login(body);
 }
+
+@UseGuards(JwtAuthGuard)
+@Get('me')
+me(
+  @Req() req: any,
+) {
+  return req.user;
+}
+
+@Post('logout')
+logout() {
+  return {
+    message: 'Logout berhasil',
+  };
+}
+
 }

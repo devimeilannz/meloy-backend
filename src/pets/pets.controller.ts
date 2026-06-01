@@ -1,13 +1,17 @@
 import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Request,
-  UseGuards,
+Body,
+Controller,
+Delete,
+Get,
+Param,
+Patch,
+Post,
+Request,
+UseGuards,
 } from '@nestjs/common';
 
-import { PetsService } from './pets.service';
+import { PetsService }
+from './pets.service';
 
 import { JwtAuthGuard }
 from 'src/helper/jwt-auth.guard';
@@ -15,29 +19,96 @@ from 'src/helper/jwt-auth.guard';
 @Controller('pets')
 export class PetsController {
 
-  constructor(
-    private petsService: PetsService,
-  ) {}
+constructor(
+private petsService: PetsService,
+) {}
 
-  
-  @Post()
-  @UseGuards(JwtAuthGuard)
-  create(
-    @Body() body: any,
-    @Request() req,
-  ) {
+@Post()
+@UseGuards(JwtAuthGuard)
+create(
+@Body() body: any,
+@Request() req,
+) {
 
-    return this.petsService.create(
-      body,
-      req.user,
-    );
-  }
+return this.petsService.create(
+  body,
+  req.user,
+);
 
 
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  findAll() {
+}
 
-    return this.petsService.findAll();
-  }
+@UseGuards(JwtAuthGuard)
+@Get('my')
+myPets(
+@Request() req,
+) {
+
+
+return this.petsService.myPets(
+  req.user.id,
+);
+
+
+}
+
+@Get()
+findAll() {
+
+
+return this.petsService.findAll();
+
+
+}
+
+@Get(':id')
+findOne(
+@Param('id')
+id: string,
+) {
+
+
+return this.petsService.findOne(
+  Number(id),
+);
+
+
+}
+
+@UseGuards(JwtAuthGuard)
+@Patch(':id')
+update(
+@Param('id')
+id: string,
+
+
+@Body()
+body: any,
+
+
+) {
+
+
+return this.petsService.update(
+  Number(id),
+  body,
+);
+
+
+}
+
+@UseGuards(JwtAuthGuard)
+@Delete(':id')
+delete(
+@Param('id')
+id: string,
+) {
+
+
+return this.petsService.delete(
+  Number(id),
+);
+
+
+}
 }

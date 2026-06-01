@@ -14,10 +14,10 @@ enum Role {
 
 enum BookingStatus {
   pending
-  waiting_payment
   paid
-  on_progress
+  proses_grooming
   completed
+  reject
   cancelled
 }
 

@@ -6,26 +6,102 @@ from 'src/prisma/prisma.service';
 @Injectable()
 export class PetsService {
 
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+constructor(
+private prisma: PrismaService,
+) {}
 
-  create(data: any, user: any) {
+create(
+data: any,
+user: any,
+) {
 
-    return this.prisma.pet.create({
-      data: {
-        ...data,
-        userId: user.id,
-      },
-    });
-  }
 
-  findAll() {
+return this.prisma.pet.create({
+  data: {
+    name: data.name,
+    type: data.type,
+    age: Number(data.age),
 
-    return this.prisma.pet.findMany({
-      include: {
-        user: true,
-      },
-    });
-  }
+    userId: user.id,
+  },
+});
+
+
+}
+
+findAll() {
+
+
+return this.prisma.pet.findMany({
+  include: {
+    user: true,
+  },
+});
+
+
+}
+
+findOne(
+id: number,
+) {
+
+
+return this.prisma.pet.findUnique({
+  where: {
+    id,
+  },
+
+  include: {
+    user: true,
+    bookings: true,
+  },
+});
+
+}
+
+myPets(
+userId: number,
+) {
+
+
+return this.prisma.pet.findMany({
+  where: {
+    userId,
+  },
+});
+
+
+}
+
+update(
+id: number,
+data: any,
+) {
+
+
+return this.prisma.pet.update({
+  where: {
+    id,
+  },
+
+  data: {
+    name: data.name,
+    type: data.type,
+    age: Number(data.age),
+  },
+});
+
+}
+
+delete(
+id: number,
+) {
+
+
+return this.prisma.pet.delete({
+  where: {
+    id,
+  },
+});
+}
 }

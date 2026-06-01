@@ -1,16 +1,20 @@
 import {
   IsEmail,
-  IsString,
+  IsNotEmpty,
+  IsOptional,
 } from 'class-validator';
 
 export class RegisterDto {
 
-  @IsString()
-    username!: string;
+  @IsNotEmpty()
+  username!: string;
 
   @IsEmail()
-    email!: string;
+  email!: string;
 
-  @IsString()
-    password!: string;
+  @IsNotEmpty()
+  password!: string;
+
+  @IsOptional()
+  role!: 'SUPER_ADMIN' | 'CUSTOMER';
 }

@@ -165,6 +165,40 @@ export class BookingService {
 
   return result;
 }
+async updateStatus(
+  id: number,
+  status: string,
+) {
+
+  const booking =
+    await this.prisma.booking.findUnique({
+      where: {
+        id,
+      },
+    });
+
+  if (!booking) {
+    throw new NotFoundException(
+      'Booking tidak ditemukan',
+    );
+  }
+
+  return this.prisma.booking.update({
+    where: {
+      id,
+    },
+
+    data: {
+      status: status as any,
+    },
+
+    include: {
+      user: true,
+      pet: true,
+      package: true,
+    },
+  });
+}
 
   async cancel(
     id: number,

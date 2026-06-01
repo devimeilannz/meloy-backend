@@ -1,36 +1,88 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { PrismaService }
+from 'src/prisma/prisma.service';
 
 @Injectable()
 export class GroomingPackageService {
 
-  private packages = [
-    {
-      id: 1,
-      name: 'Basic Grooming',
-      price: 50000,
-      description: 'Mandi + pengeringan',
+  constructor(
+    private prisma: PrismaService,
+  ) {}
+
+  create(data: any) {
+
+  return this.prisma.groomingPackage.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      price: Number(data.price),
     },
-    {
-      id: 2,
-      name: 'Regular Grooming',
-      price: 80000,
-      description: 'Mandi + potong kuku + telinga',
-    },
-    {
-      id: 3,
-      name: 'Premium Grooming',
-      price: 120000,
-      description: 'Full treatment grooming',
-    },
-  ];
+  });
+}
 
   findAll() {
-    return this.packages;
+
+    return this.prisma.groomingPackage.findMany({
+      orderBy: {
+        id: 'desc',
+      },
+    });
   }
 
-  findOne(id: number) {
-    return this.packages.find(
-      (item) => item.id === Number(id),
-    );
+  async findOne(
+    id: number,
+  ) {
+
+    const groomingPackage =
+      await this.prisma.groomingPackage.findUnique({
+        where: {
+          id,
+        },
+      });
+
+    if (!groomingPackage) {
+      throw new NotFoundException(
+        'Paket tidak ditemukan',
+      );
+    }
+
+    return groomingPackage;
+  }
+
+ async update(
+  id: number,
+  data: any,
+) {
+
+  await this.findOne(id);
+
+  return this.prisma.groomingPackage.update({
+    where: {
+      id,
+    },
+
+    data: {
+      name: data.name,
+      description: data.description,
+      price: Number(data.price),
+    },
+  });
+}
+
+  async delete(
+    id: number,
+  ) {
+
+    await this.findOne(id);
+
+    return this.prisma.groomingPackage.delete({
+      where: {
+        id,
+      },
+    });
   }
 }

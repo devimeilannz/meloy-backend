@@ -6,7 +6,14 @@ from './grooming-package.controller';
 import { GroomingPackageService }
 from './grooming-package.service';
 
+import { PrismaModule }
+from 'src/prisma/prisma.module';
+
 @Module({
+  imports: [
+    PrismaModule,
+  ],
+
   controllers: [
     GroomingPackageController,
   ],

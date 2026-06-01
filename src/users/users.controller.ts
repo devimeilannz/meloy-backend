@@ -1,36 +1,90 @@
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
+  Patch,
+  Req,
   UseGuards,
 } from '@nestjs/common';
-
-import { UsersService }
-from './users.service';
 
 import { JwtAuthGuard }
 from 'src/helper/jwt-auth.guard';
 
-import {Roles} from 'src/helper/roles.decorator';
+import { UsersService }
+from './users.service';
 
 import { RolesGuard }
 from 'src/helper/roles-guard';
-
+import { Roles }from 'src/helper/roles.decorator';
 
 @Controller('users')
 export class UsersController {
-constructor(
+
+  constructor(
     private usersService:
       UsersService,
   ) {}
 
-  @UseGuards(
-    JwtAuthGuard,
-    RolesGuard,
-  )
-  @Roles('SUPER_ADMIN')
-  @Get()
-  findAll() {
+  // GET PROFILE
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  profile(
+    @Req() req: any,
+  ) {
+    return this.usersService.profile(
+      req.user.id,
+    );
+  }
 
-    return this.usersService.findAll();
+  // UPDATE PROFILE
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateProfile(
+    @Req() req: any,
+
+    @Body()
+    body: any,
+  ) {
+    return this.usersService.updateProfile(
+      req.user.id,
+      body,
+    );
+  }
+
+  // DELETE ACCOUNT
+  @UseGuards(JwtAuthGuard)
+  @Delete('profile')
+  deleteProfile(
+    @Req() req: any,
+  ) {
+    return this.usersService.deleteProfile(
+      req.user.id,
+    );
+  }
+
+  // GET ALL CUSTOME
+  @UseGuards(
+  JwtAuthGuard,
+  RolesGuard,
+)
+
+@Roles('SUPER_ADMIN')
+
+@Get()
+findAll() {
+  return this.usersService.findAll();
+}
+
+  // GET CUSTOMER DETAIL
+  @Get(':id')
+  findOne(
+    @Param('id')
+    id: string,
+  ) {
+    return this.usersService.findOne(
+      Number(id),
+    );
   }
 }

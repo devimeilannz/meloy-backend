@@ -99,4 +99,20 @@ export class BookingController {
       Number(id),
     );
   }
+  @Patch(':id/status')
+updateStatus(
+
+  @Param('id')
+  id: string,
+
+  @Body()
+  body: any,
+
+) {
+
+  return this.bookingService.updateStatus(
+    Number(id),
+    body.status,
+  );
+}
 }

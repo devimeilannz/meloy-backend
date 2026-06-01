@@ -7,6 +7,68 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String
+  email     String    @unique
+  password  String
+  role      Role      @default(CUSTOMER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  pets      Pet[]
+}
+
+model Pet {
+  id        Int       @id @default(autoincrement())
+  name      String
+  type      String
+  userId    Int
+  createdAt DateTime  @default(now())
+  age       Int
+  bookings  Booking[]
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "Pet_userId_fkey")
+}
+
+model GroomingPackage {
+  id          Int       @id @default(autoincrement())
+  name        String
+  price       Int
+  description String
+  bookings    Booking[]
+}
+
+model Booking {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  petId     Int
+  packageId Int
+  tanggal   DateTime
+  jam       String
+  status    BookingStatus   @default(pending)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  package   GroomingPackage @relation(fields: [packageId], references: [id])
+  pet       Pet             @relation(fields: [petId], references: [id])
+  user      User            @relation(fields: [userId], references: [id])
+  transaksi Transaksi?
+
+  @@index([packageId], map: "Booking_packageId_fkey")
+  @@index([petId], map: "Booking_petId_fkey")
+  @@index([userId], map: "Booking_userId_fkey")
+}
+
+model Transaksi {
+  id        Int      @id @default(autoincrement())
+  bookingId Int      @unique
+  total     Int
+  proof     String?
+  createdAt DateTime @default(now())
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+}
+
 enum Role {
   SUPER_ADMIN
   CUSTOMER
@@ -19,77 +81,4 @@ enum BookingStatus {
   completed
   reject
   cancelled
-}
-
-model User {
-  id        Int      @id @default(autoincrement())
-  username  String
-  email     String   @unique
-  password  String
-  role      Role     @default(CUSTOMER)
-
-  pets      Pet[]
-  bookings  Booking[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Pet {
-  id        Int      @id @default(autoincrement())
-  name      String
-  type      String
-  age      Int
-
-  userId    Int
-  user      User @relation(fields: [userId], references: [id])
-
-  bookings  Booking[]
-
-  createdAt DateTime @default(now())
-}
- 
- model GroomingPackage {
-  id          Int      @id @default(autoincrement())
-  name        String
-  price       Int
-  description String
-
-  bookings    Booking[]
-}
-
-model Booking {
-  id          Int      @id @default(autoincrement())
-
-  userId      Int
-  petId       Int
-  packageId   Int
-
-  tanggal     DateTime
-  jam         String
-
- status BookingStatus @default(pending)
-
-  user        User @relation(fields: [userId], references: [id])
-  pet         Pet @relation(fields: [petId], references: [id])
-  package     GroomingPackage @relation(fields: [packageId], references: [id])
- 
-
-  transaksi   Transaksi?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Transaksi {
-  id          Int      @id @default(autoincrement())
-
-  bookingId   Int      @unique
-  total       Int
-
-  proof       String?
-
-  booking     Booking @relation(fields: [bookingId], references: [id])
-
-  createdAt   DateTime @default(now())
 }

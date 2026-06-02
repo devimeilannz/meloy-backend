@@ -13,15 +13,18 @@ import {
 } from '@nestjs/common';
 
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from 'src/helper/jwt-auth.guard';
 import { RolesGuard } from 'src/helper/roles-guard';
 import { Roles } from 'src/helper/roles.decorator';
 
 import { TransaksiService } from './transaksi.service';
+import { CreateTransaksiDto } from './dto/create-transaksi.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-@ApiBearerAuth('access-token')
 
+@ApiTags('Transaksi')
+@ApiBearerAuth('access-token')
 @Controller('transaksi')
 export class TransaksiController {
   constructor(private transaksiService: TransaksiService) {}
@@ -46,6 +49,14 @@ export class TransaksiController {
   }
 
   // =========================
+  // GET REPORT
+  // =========================
+  @Get('report')
+  getReport() {
+    return this.transaksiService.getReport();
+  }
+
+  // =========================
   // GET DETAIL
   // =========================
   @UseGuards(JwtAuthGuard)
@@ -60,11 +71,6 @@ export class TransaksiController {
     return this.transaksiService.findOne(parsedId);
   }
 
-  @Get('report')
-getReport() {
-  return this.transaksiService.getReport();
-}
-
   // =========================
   // CREATE TRANSAKSI (UPLOAD FILE)
   // =========================
@@ -75,18 +81,22 @@ getReport() {
       dest: './uploads',
     }),
   )
-  async create(
-    @Body() body: any,
+  create(
+    @Body() body: CreateTransaksiDto,
     @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
   ) {
-    console.log('BODY:', body);
-    console.log('FILE:', file);
-
     if (!file) {
-      throw new BadRequestException('Proof file is required (proof)');
+      throw new BadRequestException(
+        'Proof file is required',
+      );
     }
 
-    return this.transaksiService.create(body, file);
+    return this.transaksiService.create(
+      body,
+      file,
+      req.user,
+    );
   }
 
   // =========================
@@ -105,6 +115,9 @@ getReport() {
       throw new BadRequestException('Invalid ID');
     }
 
-    return this.transaksiService.updateStatus(parsedId, body.status);
+    return this.transaksiService.updateStatus(
+      parsedId,
+      body.status,
+    );
   }
 }

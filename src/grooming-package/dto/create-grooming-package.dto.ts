@@ -16,7 +16,4 @@ export class CreateGroomingPackageDto {
   @IsInt()
     price!: number;
 
-  @ApiProperty()
-  @IsString()
-    image!: string;
 }

@@ -17,7 +17,7 @@ export class TransaksiService {
   // =========================
   // CREATE TRANSAKSI
   // =========================
-  async create(data: any, file: Express.Multer.File) {
+  async create(data: any, file: Express.Multer.File, user: any) {
     if (!file) {
       throw new BadRequestException('File proof tidak ditemukan');
     }

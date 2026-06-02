@@ -8,14 +8,21 @@ import {
   Req,
   UseGuards,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
+
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { BookingService } from './booking.service';
 import { JwtAuthGuard } from 'src/helper/jwt-auth.guard';
 import { RolesGuard } from 'src/helper/roles-guard';
 import { Roles } from 'src/helper/roles.decorator';
-@ApiBearerAuth('access-token')
 
+import { CreateBookingDto } from './dto/create-booking.dto';
+import { UpdateStatusDto } from './dto/update-status.dto';
+
+@ApiTags('Booking') // 🔥 biar rapi di swagger
+@ApiBearerAuth('access-token')
 @Controller('booking')
 export class BookingController {
   constructor(private bookingService: BookingService) {}
@@ -25,7 +32,10 @@ export class BookingController {
   // =====================
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() body: any, @Req() req: any) {
+  create(
+    @Body() body: CreateBookingDto,
+    @Req() req: any,
+  ) {
     return this.bookingService.create(body, req.user);
   }
 
@@ -40,36 +50,33 @@ export class BookingController {
   }
 
   // =====================
-  // AVAILABLE SLOT
+  // AVAILABLE SLOT (pakai query)
+  // contoh: /booking/available-slot?date=2026-06-10
   // =====================
-  @Get('available-slot/:tanggal')
-  availableSlot(@Param('tanggal') tanggal: string) {
-    return this.bookingService.availableSlot(tanggal);
+  @Get('available-slot')
+  getAvailableSlot(
+    @Query('date') date: string,
+  ) {
+    return this.bookingService.availableSlot(date);
   }
 
   // =====================
-  // HISTORY USER
+  // HISTORY USER (LOGIN)
   // =====================
   @UseGuards(JwtAuthGuard)
-  @Get('history/:userId')
-  history(@Param('userId') userId: string) {
-    const parsed = Number(userId);
-
-    if (isNaN(parsed)) {
-      throw new BadRequestException('User ID tidak valid');
-    }
-
-    return this.bookingService.history(parsed);
+  @Get('history')
+  getHistory(@Req() req: any) {
+    return this.bookingService.history(req.user.id);
   }
+
   // =====================
-// CURRENT BOOKING (USER LOGIN)
-// =====================
-@UseGuards(JwtAuthGuard)
-@Get('current')
-getCurrent(@Req() req: any) {
-   console.log(req.user);
-  return this.bookingService.getCurrent(req.user.id);
-}
+  // CURRENT BOOKING
+  // =====================
+  @UseGuards(JwtAuthGuard)
+  @Get('current')
+  getCurrent(@Req() req: any) {
+    return this.bookingService.getCurrent(req.user.id);
+  }
 
   // =====================
   // DETAIL BOOKING
@@ -80,12 +87,13 @@ getCurrent(@Req() req: any) {
     const parsed = Number(id);
 
     if (isNaN(parsed)) {
-      throw new BadRequestException('ID booking tidak valid');
+      throw new BadRequestException(
+        'ID booking tidak valid',
+      );
     }
 
     return this.bookingService.findOne(parsed);
   }
-  
 
   // =====================
   // CANCEL BOOKING
@@ -96,7 +104,9 @@ getCurrent(@Req() req: any) {
     const parsed = Number(id);
 
     if (isNaN(parsed)) {
-      throw new BadRequestException('ID booking tidak valid');
+      throw new BadRequestException(
+        'ID booking tidak valid',
+      );
     }
 
     return this.bookingService.cancel(parsed);
@@ -107,20 +117,21 @@ getCurrent(@Req() req: any) {
   // =====================
   @UseGuards(JwtAuthGuard)
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() body: any) {
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: UpdateStatusDto,
+  ) {
     const parsed = Number(id);
 
     if (isNaN(parsed)) {
-      throw new BadRequestException('ID booking tidak valid');
+      throw new BadRequestException(
+        'ID booking tidak valid',
+      );
     }
 
-    return this.bookingService.updateStatus(parsed, body.status);
+    return this.bookingService.updateStatus(
+      parsed,
+      body.status as any,
+    );
   }
- 
-}
-
-function ApiBearerAuth(_name: string): (target: typeof BookingController) => void | typeof BookingController {
-  // Minimal no-op implementation to satisfy decorator usage in this file.
-  // In real projects this would come from @nestjs/swagger.
-  return (target: typeof BookingController) => target;
 }

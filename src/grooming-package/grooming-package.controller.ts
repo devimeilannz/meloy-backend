@@ -11,6 +11,8 @@ import {
 
 import { GroomingPackageService }
 from './grooming-package.service';
+import { CreateGroomingPackageDto } from './dto/create-grooming-package.dto';
+import { UpdateGroomingPackageDto } from './dto/update-grooming-package.dto';
 @ApiBearerAuth('access-token')
 @Controller('grooming-package')
 export class GroomingPackageController {
@@ -21,9 +23,7 @@ export class GroomingPackageController {
   ) {}
 
   @Post()
-  create(
-    @Body() body: any,
-  ) {
+  create(@Body() body: CreateGroomingPackageDto) {
     return this.service.create(body);
   }
 
@@ -43,13 +43,7 @@ export class GroomingPackageController {
   }
 
   @Patch(':id')
-  update(
-    @Param('id')
-    id: string,
-
-    @Body()
-    body: any,
-  ) {
+  update(@Body() body: UpdateGroomingPackageDto, @Param('id') id: string) {
     return this.service.update(
       Number(id),
       body,

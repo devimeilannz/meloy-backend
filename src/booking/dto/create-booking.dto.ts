@@ -1,10 +1,5 @@
-import {
-  IsDateString,
-  IsInt,
-  IsString,
-} from 'class-validator';
-
 import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsDateString, IsIn } from 'class-validator';
 
 export class CreateBookingDto {
   @ApiProperty()
@@ -17,9 +12,9 @@ export class CreateBookingDto {
 
   @ApiProperty()
   @IsDateString()
-  tanggal!: Date;
+  tanggal!: string;
 
   @ApiProperty()
-  @IsString()
+  @IsIn(['09:00', '11:00', '13:00', '15:00', '17:00'])
   jam!: string;
 }

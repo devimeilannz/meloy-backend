@@ -6,6 +6,7 @@ Get,
 Param,
 Patch,
 Post,
+Req,
 Request,
 UseGuards,
 } from '@nestjs/common';
@@ -15,6 +16,8 @@ from './pets.service';
 
 import { JwtAuthGuard }
 from 'src/helper/jwt-auth.guard';
+import { CreatePetDto } from './dto/create-pet.dto';
+import { UpdatePetDto } from './dto/update-pet.dto';
 
 @ApiBearerAuth('access-token')
 @Controller('pets')
@@ -26,10 +29,8 @@ private petsService: PetsService,
 
 @Post()
 @UseGuards(JwtAuthGuard)
-create(
-@Body() body: any,
-@Request() req,
-) {
+create(@Body() body: CreatePetDto, @Req() req: any)
+{
 
 return this.petsService.create(
   body,
@@ -78,17 +79,7 @@ return this.petsService.findOne(
 
 @UseGuards(JwtAuthGuard)
 @Patch(':id')
-update(
-@Param('id')
-id: string,
-
-
-@Body()
-body: any,
-
-
-) {
-
+update(@Body() body: UpdatePetDto, @Param('id') id: string) {
 
 return this.petsService.update(
   Number(id),
@@ -113,5 +104,6 @@ return this.petsService.delete(
 
 }
 }
+
 
 

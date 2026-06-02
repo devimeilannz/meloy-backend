@@ -13,7 +13,12 @@ import {
 } from '@nestjs/common';
 
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/helper/jwt-auth.guard';
 import { RolesGuard } from 'src/helper/roles-guard';
@@ -30,7 +35,44 @@ export class TransaksiController {
   constructor(private transaksiService: TransaksiService) {}
 
   // =========================
-  // GET ALL (SUPER ADMIN)
+  // CREATE TRANSAKSI (FIX SWAGGER)
+  // =========================
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        bookingId: { type: 'number' },
+        total: { type: 'number' },
+        proof: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['bookingId', 'total', 'proof'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('proof', {
+      dest: './uploads',
+    }),
+  )
+  create(
+    @Body() body: CreateTransaksiDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Proof file is required');
+    }
+
+    return this.transaksiService.create(body, file, req.user);
+  }
+
+  // =========================
+  // GET ALL
   // =========================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
@@ -72,52 +114,18 @@ export class TransaksiController {
   }
 
   // =========================
-  // CREATE TRANSAKSI (UPLOAD FILE)
-  // =========================
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  @UseInterceptors(
-    FileInterceptor('proof', {
-      dest: './uploads',
-    }),
-  )
-  create(
-    @Body() body: CreateTransaksiDto,
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: any,
-  ) {
-    if (!file) {
-      throw new BadRequestException(
-        'Proof file is required',
-      );
-    }
-
-    return this.transaksiService.create(
-      body,
-      file,
-      req.user,
-    );
-  }
-
-  // =========================
-  // UPDATE STATUS (SUPER ADMIN)
+  // UPDATE STATUS
   // =========================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() body: UpdateStatusDto,
-  ) {
+  updateStatus(@Param('id') id: string, @Body() body: UpdateStatusDto) {
     const parsedId = Number(id);
 
     if (isNaN(parsedId)) {
       throw new BadRequestException('Invalid ID');
     }
 
-    return this.transaksiService.updateStatus(
-      parsedId,
-      body.status,
-    );
+    return this.transaksiService.updateStatus(parsedId, body.status);
   }
 }

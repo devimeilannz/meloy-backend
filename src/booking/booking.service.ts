@@ -14,59 +14,80 @@ export class BookingService {
     private prisma: PrismaService,
   ) {}
 
-  async create(
-    data: any,
-    user: any,
-  ) {
+  async create(data: any, user: any) {
+  const start = new Date(data.tanggal);
+  start.setHours(0, 0, 0, 0);
 
-    const count =
-      await this.prisma.booking.count({
-        where: {
-          tanggal: new Date(data.tanggal),
-          jam: data.jam,
-        },
-      });
+  const end = new Date(data.tanggal);
+  end.setHours(23, 59, 59, 999);
 
-    if (count >= 5) {
-      throw new BadRequestException(
-        'Slot penuh',
-      );
-    }
-
-    const groomingPackage =
-      await this.prisma.groomingPackage.findUnique({
-        where: {
-          id: Number(data.packageId),
-        },
-      });
-
-    if (!groomingPackage) {
-      throw new NotFoundException(
-        'Paket grooming tidak ditemukan',
-      );
-    }
-
-    return this.prisma.booking.create({
-      data: {
-        tanggal: new Date(data.tanggal),
-        jam: data.jam,
-
-        userId: Number(user.id),
-        petId: Number(data.petId),
-        packageId: Number(data.packageId),
-
-        status: 'pending',
+  // 1. CEK JAM SUDAH DIPAKAI ATAU BELUM
+  const existing = await this.prisma.booking.findFirst({
+    where: {
+      tanggal: {
+        gte: start,
+        lte: end,
       },
+      jam: data.jam,
+    },
+  });
 
-      include: {
-        pet: true,
-        package: true,
+  if (existing) {
+    throw new BadRequestException(
+      'Jam sudah dibooking, pilih jam lain',
+    );
+  }
+
+  // 2. CEK TOTAL PER HARI (MAX 5)
+  const total = await this.prisma.booking.count({
+    where: {
+      tanggal: {
+        gte: start,
+        lte: end,
+      },
+    },
+  });
+
+  if (total >= 5) {
+    throw new BadRequestException(
+      'Slot hari ini penuh',
+    );
+  }
+
+  // 3. VALIDASI PACKAGE
+  const groomingPackage =
+    await this.prisma.groomingPackage.findUnique({
+      where: {
+        id: Number(data.packageId),
       },
     });
+
+  if (!groomingPackage) {
+    throw new NotFoundException(
+      'Paket grooming tidak ditemukan',
+    );
+  }
+
+  // 4. CREATE
+  return this.prisma.booking.create({
+    data: {
+      tanggal: new Date(data.tanggal),
+      jam: data.jam,
+
+      userId: Number(user.id),
+      petId: Number(data.petId),
+      packageId: Number(data.packageId),
+
+      status: 'pending',
+    },
+    include: {
+      pet: true,
+      package: true,
+    },
+  });
   }
 
   findAll() {
-
     return this.prisma.booking.findMany({
       include: {
         user: true,
@@ -120,39 +141,46 @@ export class BookingService {
     });
   }
 
-  async availableSlot(
-  tanggal: string,
-) {
-
-  const jams = [
-    '08:00',
-    '10:00',
+  async availableSlot(tanggal: string) {
+  const slots = [
+    '09:00',
+    '11:00',
     '13:00',
     '15:00',
+    '17:00',
   ];
 
-  const result: {
-    jam: string;
-    sisa: number;
-  }[] = [];
+  const start = new Date(tanggal);
+  start.setHours(0, 0, 0, 0);
 
-  for (const jam of jams) {
+  const end = new Date(tanggal);
+  end.setHours(23, 59, 59, 999);
 
-    const total =
-      await this.prisma.booking.count({
-        where: {
-          tanggal: new Date(tanggal),
-          jam,
-        },
-      });
+  const bookings = await this.prisma.booking.findMany({
+    where: {
+      tanggal: {
+        gte: start,
+        lte: end,
+      },
+    },
+    select: {
+      jam: true,
+    },
+  });
 
-    result.push({
-      jam,
-      sisa: 5 - total,
-    });
-  }
+  const bookedSlots = bookings.map((b) => b.jam);
 
-  return result;
+  const availableSlots = slots.filter(
+    (jam) => !bookedSlots.includes(jam),
+  );
+
+  return {
+    tanggal,
+    slots,
+    bookedSlots,
+    availableSlots,
+    isFull: availableSlots.length === 0,
+  };
 }
 async updateStatus(
   id: number,

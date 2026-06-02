@@ -13,13 +13,14 @@ import {
 } from '@nestjs/common';
 
 import { FileInterceptor } from '@nestjs/platform-express';
-
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/helper/jwt-auth.guard';
 import { RolesGuard } from 'src/helper/roles-guard';
 import { Roles } from 'src/helper/roles.decorator';
 
 import { TransaksiService } from './transaksi.service';
 import { UpdateStatusDto } from './dto/update-status.dto';
+@ApiBearerAuth('access-token')
 
 @Controller('transaksi')
 export class TransaksiController {

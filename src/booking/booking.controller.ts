@@ -14,6 +14,7 @@ import { BookingService } from './booking.service';
 import { JwtAuthGuard } from 'src/helper/jwt-auth.guard';
 import { RolesGuard } from 'src/helper/roles-guard';
 import { Roles } from 'src/helper/roles.decorator';
+@ApiBearerAuth('access-token')
 
 @Controller('booking')
 export class BookingController {
@@ -116,4 +117,10 @@ getCurrent(@Req() req: any) {
     return this.bookingService.updateStatus(parsed, body.status);
   }
  
+}
+
+function ApiBearerAuth(_name: string): (target: typeof BookingController) => void | typeof BookingController {
+  // Minimal no-op implementation to satisfy decorator usage in this file.
+  // In real projects this would come from @nestjs/swagger.
+  return (target: typeof BookingController) => target;
 }

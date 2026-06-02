@@ -9,13 +9,14 @@ Post,
 Request,
 UseGuards,
 } from '@nestjs/common';
-
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { PetsService }
 from './pets.service';
 
 import { JwtAuthGuard }
 from 'src/helper/jwt-auth.guard';
 
+@ApiBearerAuth('access-token')
 @Controller('pets')
 export class PetsController {
 
@@ -112,3 +113,5 @@ return this.petsService.delete(
 
 }
 }
+
+

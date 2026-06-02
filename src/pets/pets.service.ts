@@ -92,16 +92,13 @@ return this.prisma.pet.update({
 });
 
 }
-
-delete(
-id: number,
-) {
-
-
-return this.prisma.pet.delete({
-  where: {
-    id,
-  },
-});
-}
+// ⭐ SOFT DELETE (FIX ERROR KAMU)
+  delete(id: number) {
+    return this.prisma.pet.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+      },
+    });
+  }
 }

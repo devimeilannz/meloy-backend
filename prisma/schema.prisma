@@ -24,6 +24,7 @@ model Pet {
   name      String
   type      String
   userId    Int
+  isDeleted Boolean  @default(false)
   createdAt DateTime  @default(now())
   age       Int
   bookings  Booking[]

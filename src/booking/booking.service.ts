@@ -77,34 +77,23 @@ export class BookingService {
     });
   }
 
-  async findOne(
-  id: number,
-) {
-
+  async findOne(id: number) {
   if (isNaN(id)) {
-    throw new BadRequestException(
-      'ID booking tidak valid',
-    );
+    throw new BadRequestException('ID booking tidak valid');
   }
 
-  const booking =
-    await this.prisma.booking.findUnique({
-      where: {
-        id,
-      },
-
-      include: {
-        user: true,
-        pet: true,
-        package: true,
-        transaksi: true,
-      },
-    });
+  const booking = await this.prisma.booking.findUnique({
+    where: { id },
+    include: {
+      user: true,
+      pet: true,
+      package: true,
+      transaksi: true,
+    },
+  });
 
   if (!booking) {
-    throw new NotFoundException(
-      'Booking tidak ditemukan',
-    );
+    throw new NotFoundException('Booking tidak ditemukan');
   }
 
   return booking;
@@ -227,4 +216,27 @@ async updateStatus(
       },
     });
   }
+  async getCurrent(userId: number) {
+  return this.prisma.booking.findMany({
+    where: {
+      userId,
+      status: {
+        in: [
+          'pending',
+          'paid',
+          'proses_grooming',
+        ],
+      },
+    },
+    include: {
+      pet: true,
+      package: true,
+      transaksi: true,
+      user: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}
 }

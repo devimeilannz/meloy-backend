@@ -1,23 +1,17 @@
 import { Injectable } from '@nestjs/common';
-
-import { PrismaService }
-from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
+  constructor(private readonly prisma: PrismaService) {}
 
-  constructor(
-    private prisma: PrismaService,
-  ) {}
-
+  // =====================
   // GET ALL CUSTOMER
+  // =====================
   findAll() {
-
     return this.prisma.user.findMany({
-      where: {
-        role: 'CUSTOMER',
-      },
-
+      where: { role: 'CUSTOMER' },
       select: {
         id: true,
         username: true,
@@ -28,16 +22,12 @@ export class UsersService {
     });
   }
 
-  // GET CUSTOMER DETAIL
-  findOne(
-    id: number,
-  ) {
-
+  // =====================
+  // GET USER DETAIL
+  // =====================
+  findOne(id: number) {
     return this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-
+      where: { id },
       select: {
         id: true,
         username: true,
@@ -49,16 +39,12 @@ export class UsersService {
     });
   }
 
+  // =====================
   // GET PROFILE
-  profile(
-    id: number,
-  ) {
-
+  // =====================
+  profile(id: number) {
     return this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-
+      where: { id },
       select: {
         id: true,
         username: true,
@@ -69,33 +55,32 @@ export class UsersService {
     });
   }
 
+  // =====================
   // UPDATE PROFILE
-  updateProfile(
-    id: number,
-    data: any,
-  ) {
-
+  // =====================
+  updateProfile(id: number, data: UpdateUserDto) {
     return this.prisma.user.update({
-      where: {
-        id,
-      },
-
+      where: { id },
       data: {
         username: data.username,
         email: data.email,
       },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
     });
   }
 
-  // DELETE ACCOUNT
-  deleteProfile(
-    id: number,
-  ) {
-
+  // =====================
+  // DELETE PROFILE
+  // =====================
+  deleteProfile(id: number) {
     return this.prisma.user.delete({
-      where: {
-        id,
-      },
+      where: { id },
     });
   }
 }

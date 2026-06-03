@@ -1,19 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class GroomingPackageService {
   constructor(private prisma: PrismaService) {}
 
-  create(data: any) {
-    return this.prisma.groomingPackage.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        price: Number(data.price),
-      },
-    });
+  async create(data: any) {
+  const existing = await this.prisma.groomingPackage.findFirst({
+    where: {
+      name: data.name,
+    },
+  });
+
+  if (existing) {
+    throw new BadRequestException('Nama paket sudah digunakan');
   }
+
+  return this.prisma.groomingPackage.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      price: Number(data.price),
+    },
+  });
+}
 
   findAll() {
     return this.prisma.groomingPackage.findMany({

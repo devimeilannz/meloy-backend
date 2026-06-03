@@ -22,30 +22,20 @@ export class BookingService {
     const end = new Date(data.tanggal);
     end.setHours(23, 59, 59, 999);
 
-    // 1. CEK JAM SUDAH DIPAKAI
     const existing = await this.prisma.booking.findFirst({
       where: {
-        tanggal: {
-          gte: start,
-          lte: end,
-        },
+        tanggal: { gte: start, lte: end },
         jam: data.jam,
       },
     });
 
     if (existing) {
-      throw new BadRequestException(
-        'Jam sudah dibooking, pilih jam lain',
-      );
+      throw new BadRequestException('Jam sudah dibooking');
     }
 
-    // 2. CEK SLOT HARIAN (MAX 5)
     const total = await this.prisma.booking.count({
       where: {
-        tanggal: {
-          gte: start,
-          lte: end,
-        },
+        tanggal: { gte: start, lte: end },
       },
     });
 
@@ -53,7 +43,6 @@ export class BookingService {
       throw new BadRequestException('Slot hari ini penuh');
     }
 
-    // 3. CEK PET
     const pet = await this.prisma.pet.findUnique({
       where: { id: Number(data.petId) },
     });
@@ -62,33 +51,27 @@ export class BookingService {
       throw new NotFoundException('Pet tidak ditemukan');
     }
 
-    // 4. CEK PACKAGE
-    const groomingPackage =
-      await this.prisma.groomingPackage.findUnique({
-        where: { id: Number(data.packageId) },
-      });
+    const pkg = await this.prisma.groomingPackage.findUnique({
+      where: { id: Number(data.packageId) },
+    });
 
-    if (!groomingPackage) {
-      throw new NotFoundException(
-        'Paket grooming tidak ditemukan',
-      );
+    if (!pkg) {
+      throw new NotFoundException('Paket tidak ditemukan');
     }
 
-    // 5. CREATE BOOKING
     return this.prisma.booking.create({
       data: {
         tanggal: new Date(data.tanggal),
         jam: data.jam,
-
         userId: Number(user.id),
         petId: Number(data.petId),
         packageId: Number(data.packageId),
-
         status: BookingStatus.pending,
       },
       include: {
         pet: true,
         package: true,
+        user: true,
       },
     });
   }
@@ -111,13 +94,9 @@ export class BookingService {
   }
 
   // =========================
-  // GET DETAIL
+  // GET ONE
   // =========================
   async findOne(id: number) {
-    if (isNaN(id)) {
-      throw new BadRequestException('ID booking tidak valid');
-    }
-
     const booking = await this.prisma.booking.findUnique({
       where: { id },
       include: {
@@ -138,11 +117,9 @@ export class BookingService {
   // =========================
   // HISTORY USER
   // =========================
-  async history(userId: number) {
+  history(userId: number) {
     return this.prisma.booking.findMany({
-      where: {
-        userId,
-      },
+      where: { userId },
       include: {
         pet: true,
         package: true,
@@ -158,13 +135,7 @@ export class BookingService {
   // AVAILABLE SLOT
   // =========================
   async availableSlot(tanggal: string) {
-    const slots = [
-      '09:00',
-      '11:00',
-      '13:00',
-      '15:00',
-      '17:00',
-    ];
+    const slots = ['09:00', '11:00', '13:00', '15:00', '17:00'];
 
     const start = new Date(tanggal);
     start.setHours(0, 0, 0, 0);
@@ -174,10 +145,7 @@ export class BookingService {
 
     const bookings = await this.prisma.booking.findMany({
       where: {
-        tanggal: {
-          gte: start,
-          lte: end,
-        },
+        tanggal: { gte: start, lte: end },
       },
       select: {
         jam: true,
@@ -200,31 +168,32 @@ export class BookingService {
   }
 
   // =========================
-  // UPDATE STATUS
+  // UPDATE STATUS (SAFE FLOW)
   // =========================
-  async updateStatus(
-    id: number,
-    status: BookingStatus,
-  ) {
-    const booking =
-      await this.prisma.booking.findUnique({
-        where: { id },
-      });
+  async updateStatus(id: number, status: BookingStatus) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+    });
 
     if (!booking) {
-      throw new NotFoundException(
-        'Booking tidak ditemukan',
+      throw new NotFoundException('Booking tidak ditemukan');
+    }
+
+    const validTransitions: Record<string, BookingStatus[]> = {
+      pending: ['confirmed', 'cancelled'],
+      confirmed: ['cancelled'],
+      cancelled: [],
+    };
+
+    if (!validTransitions[booking.status].includes(status)) {
+      throw new BadRequestException(
+        `Tidak bisa ubah dari ${booking.status} ke ${status}`,
       );
     }
 
     return this.prisma.booking.update({
       where: { id },
       data: { status },
-      include: {
-        user: true,
-        pet: true,
-        package: true,
-      },
     });
   }
 
@@ -232,15 +201,12 @@ export class BookingService {
   // CANCEL BOOKING
   // =========================
   async cancel(id: number) {
-    const booking =
-      await this.prisma.booking.findUnique({
-        where: { id },
-      });
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+    });
 
     if (!booking) {
-      throw new NotFoundException(
-        'Booking tidak ditemukan',
-      );
+      throw new NotFoundException('Booking tidak ditemukan');
     }
 
     return this.prisma.booking.update({
@@ -254,16 +220,12 @@ export class BookingService {
   // =========================
   // CURRENT BOOKING
   // =========================
-  async getCurrent(userId: number) {
+  getCurrent(userId: number) {
     return this.prisma.booking.findMany({
       where: {
         userId,
         status: {
-          in: [
-            BookingStatus.pending,
-            BookingStatus.paid,
-            BookingStatus.proses_grooming,
-          ],
+          in: [BookingStatus.pending, BookingStatus.confirmed],
         },
       },
       include: {

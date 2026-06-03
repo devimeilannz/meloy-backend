@@ -21,15 +21,13 @@ import { Roles } from 'src/helper/roles.decorator';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 
-@ApiTags('Booking') // 🔥 biar rapi di swagger
+@ApiTags('Booking') 
 @ApiBearerAuth('access-token')
 @Controller('booking')
 export class BookingController {
   constructor(private bookingService: BookingService) {}
 
-  // =====================
-  // CREATE BOOKING
-  // =====================
+ 
   @UseGuards(JwtAuthGuard)
   @Post()
   create(
@@ -39,9 +37,9 @@ export class BookingController {
     return this.bookingService.create(body, req.user);
   }
 
-  // =====================
+  
   // ADMIN - ALL BOOKING
-  // =====================
+  
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @Get()
@@ -49,10 +47,7 @@ export class BookingController {
     return this.bookingService.findAll();
   }
 
-  // =====================
-  // AVAILABLE SLOT (pakai query)
-  // contoh: /booking/available-slot?date=2026-06-10
-  // =====================
+  
   @Get('available-slot')
   getAvailableSlot(
     @Query('date') date: string,
@@ -60,27 +55,21 @@ export class BookingController {
     return this.bookingService.availableSlot(date);
   }
 
-  // =====================
-  // HISTORY USER (LOGIN)
-  // =====================
+  
   @UseGuards(JwtAuthGuard)
   @Get('history')
   getHistory(@Req() req: any) {
     return this.bookingService.history(req.user.id);
   }
 
-  // =====================
-  // CURRENT BOOKING
-  // =====================
+  
   @UseGuards(JwtAuthGuard)
   @Get('current')
   getCurrent(@Req() req: any) {
     return this.bookingService.getCurrent(req.user.id);
   }
 
-  // =====================
-  // DETAIL BOOKING
-  // =====================
+  
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -95,9 +84,7 @@ export class BookingController {
     return this.bookingService.findOne(parsed);
   }
 
-  // =====================
-  // CANCEL BOOKING
-  // =====================
+  
   @UseGuards(JwtAuthGuard)
   @Patch(':id/cancel')
   cancel(@Param('id') id: string) {
@@ -112,9 +99,7 @@ export class BookingController {
     return this.bookingService.cancel(parsed);
   }
 
-  // =====================
-  // UPDATE STATUS
-  // =====================
+  
   @UseGuards(JwtAuthGuard)
   @Patch(':id/status')
   updateStatus(

@@ -14,9 +14,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  // =========================
-  // REGISTER
-  // =========================
+  
   async register(data: any) {
     const userExist = await this.prisma.user.findUnique({
       where: { email: data.email },
@@ -43,9 +41,7 @@ export class AuthService {
     };
   }
 
-  // =========================
-  // LOGIN
-  // =========================
+  
   async login(data: any) {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },

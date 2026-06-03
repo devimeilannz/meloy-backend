@@ -34,34 +34,32 @@ export class PetsController {
     return this.petsService.create(body, req.user);
   }
 
-  // =========================
+  
   // MY PETS
-  // =========================
+  
   @Get('my')
   @UseGuards(JwtAuthGuard)
   myPets(@Request() req: any) {
     return this.petsService.myPets(req.user.id);
   }
 
-  // =========================
+  
   // GET ALL PETS
-  // =========================
+  
   @Get()
   findAll() {
     return this.petsService.findAll();
   }
 
-  // =========================
+ 
   // GET ONE PET
-  // =========================
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.petsService.findOne(Number(id));
   }
 
-  // =========================
-  // UPDATE PET (FIX SWAGGER BODY)
-  // =========================
+ 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBody({ type: UpdatePetDto }) // 🔥 INI WAJIB
@@ -72,9 +70,7 @@ export class PetsController {
     return this.petsService.update(Number(id), body);
   }
 
-  // =========================
-  // DELETE PET
-  // =========================
+  
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   delete(@Param('id') id: string) {

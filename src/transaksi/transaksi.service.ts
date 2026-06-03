@@ -20,7 +20,7 @@ export class TransaksiService {
   // =========================
   // CREATE TRANSAKSI
   // =========================
-  async create(data: any, file: Express.Multer.File, user: any) {
+  async create(data: any, file: Express.Multer.File, userId: number) {
     if (!file) {
       throw new BadRequestException('File proof tidak ada');
     }
@@ -33,10 +33,16 @@ export class TransaksiService {
       throw new BadRequestException('Upload gagal');
     }
 
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: Number(data.bookingId) },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking tidak ditemukan');
+    }
+
     const existing = await this.prisma.transaksi.findUnique({
-      where: {
-        bookingId: Number(data.bookingId),
-      },
+      where: { bookingId: Number(data.bookingId) },
     });
 
     if (existing) {
@@ -48,6 +54,8 @@ export class TransaksiService {
         bookingId: Number(data.bookingId),
         total: Number(data.total),
         proof: upload.secure_url,
+        paymentStatus: 'PENDING',
+        groomingStatus: 'WAITING',
       },
       include: {
         booking: true,
@@ -56,9 +64,74 @@ export class TransaksiService {
   }
 
   // =========================
-  // GET MY TRANSAKSI (FIX ERROR KAMU)
+  // VERIFY PAYMENT → PAID
   // =========================
-  async getMy(userId: number) {
+  async verifyPayment(id: number) {
+    const trx = await this.prisma.transaksi.findUnique({
+      where: { id },
+    });
+
+    if (!trx) {
+      throw new NotFoundException('Transaksi tidak ditemukan');
+    }
+
+    if (!trx.proof) {
+      throw new BadRequestException('Belum upload proof');
+    }
+
+    if (trx.paymentStatus === 'PAID') {
+      throw new BadRequestException('Sudah diverifikasi');
+    }
+
+    return this.prisma.transaksi.update({
+      where: { id },
+      data: {
+        paymentStatus: 'PAID',
+      },
+    });
+  }
+
+  // =========================
+  // UPDATE GROOMING STATUS
+  // =========================
+  async updateGroomingStatus(id: number, status: string) {
+    const trx = await this.prisma.transaksi.findUnique({
+      where: { id },
+    });
+
+    if (!trx) {
+      throw new NotFoundException('Transaksi tidak ditemukan');
+    }
+
+    if (trx.paymentStatus !== 'PAID') {
+      throw new BadRequestException('Harus PAID dulu sebelum grooming');
+    }
+
+    const validFlow = ['WAITING', 'PROGRESS', 'DONE'];
+
+    const currentIndex = validFlow.indexOf(trx.groomingStatus);
+    const nextIndex = validFlow.indexOf(status);
+
+    if (nextIndex === -1) {
+      throw new BadRequestException('Status tidak valid');
+    }
+
+    if (nextIndex < currentIndex) {
+      throw new BadRequestException('Tidak bisa mundur status');
+    }
+
+    return this.prisma.transaksi.update({
+      where: { id },
+      data: {
+        groomingStatus: status,
+      },
+    });
+  }
+
+  // =========================
+  // GET MY TRANSAKSI
+  // =========================
+  getMy(userId: number) {
     return this.prisma.transaksi.findMany({
       where: {
         booking: {
@@ -78,25 +151,7 @@ export class TransaksiService {
   }
 
   // =========================
-  // UPDATE STATUS
-  // =========================
-  async updateStatus(id: number, status: string) {
-    const transaksi = await this.prisma.transaksi.findUnique({
-      where: { id },
-    });
-
-    if (!transaksi) {
-      throw new NotFoundException('Transaksi tidak ditemukan');
-    }
-
-    return this.prisma.transaksi.update({
-      where: { id },
-      data: { status: status as any },
-    });
-  }
-
-  // =========================
-  // FIND ALL
+  // GET ALL
   // =========================
   findAll() {
     return this.prisma.transaksi.findMany({
@@ -113,7 +168,7 @@ export class TransaksiService {
   }
 
   // =========================
-  // FIND ONE
+  // GET ONE
   // =========================
   findOne(id: number) {
     return this.prisma.transaksi.findUnique({
@@ -134,24 +189,14 @@ export class TransaksiService {
   // REPORT
   // =========================
   getReport() {
-    return this.prisma.transaksi.findMany({
-      include: {
-        booking: {
-          include: {
-            user: true,
-            pet: true,
-            package: true,
-          },
-        },
-      },
-    });
+    return this.findAll();
   }
 
   // =========================
-  // PRINT PDF (FIX PDFKIT ERROR)
+  // PRINT PDF
   // =========================
   async printTransaksi(id: number, res: Response) {
-    const transaksi = await this.prisma.transaksi.findUnique({
+    const trx = await this.prisma.transaksi.findUnique({
       where: { id },
       include: {
         booking: {
@@ -164,7 +209,7 @@ export class TransaksiService {
       },
     });
 
-    if (!transaksi) {
+    if (!trx) {
       throw new BadRequestException('Transaksi tidak ditemukan');
     }
 
@@ -175,32 +220,26 @@ export class TransaksiService {
       'Content-Disposition',
       `inline; filename=invoice-${id}.pdf`,
     );
-    res.setHeader('Cache-Control', 'no-cache');
 
     doc.pipe(res);
 
-    // ======================
-    // PDF CONTENT
-    // ======================
-    doc.fontSize(20).text('INVOICE TRANSAKSI', {
-      align: 'center',
-    });
-
+    doc.fontSize(20).text('INVOICE TRANSAKSI', { align: 'center' });
     doc.moveDown();
 
-    doc.fontSize(12).text(`ID: ${transaksi.id}`);
-    doc.text(`Total: Rp ${transaksi.total}`);
-    doc.text(`Status: ${transaksi.status}`);
-    doc.text(`Tanggal: ${transaksi.createdAt}`);
+    doc.fontSize(12).text(`ID: ${trx.id}`);
+    doc.text(`Total: Rp ${trx.total}`);
+    doc.text(`Payment: ${trx.paymentStatus}`);
+    doc.text(`Grooming: ${trx.groomingStatus}`);
+    doc.text(`Tanggal: ${trx.createdAt}`);
 
     doc.moveDown();
     doc.text('=== DETAIL BOOKING ===');
 
-    doc.text(`Customer: ${transaksi.booking.user.username}`);
-    doc.text(`Email: ${transaksi.booking.user.email}`);
-    doc.text(`Pet: ${transaksi.booking.pet.name}`);
-    doc.text(`Package: ${transaksi.booking.package.name}`);
-    doc.text(`Tanggal Booking: ${transaksi.booking.tanggal}`);
+    doc.text(`Customer: ${trx.booking.user.username}`);
+    doc.text(`Email: ${trx.booking.user.email}`);
+    doc.text(`Pet: ${trx.booking.pet.name}`);
+    doc.text(`Package: ${trx.booking.package.name}`);
+    doc.text(`Tanggal: ${trx.booking.tanggal}`);
 
     doc.end();
   }

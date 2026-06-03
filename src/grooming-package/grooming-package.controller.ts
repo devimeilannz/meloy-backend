@@ -20,34 +20,30 @@ import { UpdateGroomingPackageDto } from './dto/update-grooming-package.dto';
 export class GroomingPackageController {
   constructor(private service: GroomingPackageService) {}
 
-  // =====================
-  // CREATE
-  // =====================
+ 
   @Post()
   @ApiBody({ type: CreateGroomingPackageDto })
   create(@Body() body: CreateGroomingPackageDto) {
     return this.service.create(body);
   }
 
-  // =====================
+ 
   // GET ALL
-  // =====================
+  
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
-  // =====================
+ 
   // GET ONE
-  // =====================
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(Number(id));
   }
 
-  // =====================
-  // UPDATE (PATCH - FIX SWAGGER BODY)
-  // =====================
+ 
   @Patch(':id')
   @ApiBody({ type: UpdateGroomingPackageDto }) // 🔥 INI YANG WAJIB
   update(
@@ -57,9 +53,7 @@ export class GroomingPackageController {
     return this.service.update(Number(id), body);
   }
 
-  // =====================
-  // DELETE
-  // =====================
+  
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.service.delete(Number(id));

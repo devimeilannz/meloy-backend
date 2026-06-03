@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { BookingStatus } from '@prisma/client';
 
-import { PrismaService }
-from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class DashboardService {
@@ -27,14 +27,14 @@ export class DashboardService {
     const pendingBooking =
       await this.prisma.booking.count({
         where: {
-          status: 'pending',
+          status: BookingStatus.pending,
         },
       });
 
     const completedBooking =
       await this.prisma.booking.count({
         where: {
-          status: 'completed',
+          status: BookingStatus.confirmed,
         },
       });
 

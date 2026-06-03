@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsInt,
   IsOptional,
@@ -6,13 +7,17 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTransaksiDto {
-@ApiProperty()
+  @ApiProperty()
+  @Type(() => Number)
   @IsInt()
-    bookingId!: number;
-@ApiProperty()
+  bookingId!: number;
+
+  @ApiProperty()
+  @Type(() => Number)
   @IsInt()
-    total!: number;
-@ApiProperty()
+  total!: number;
+
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   proof?: string;

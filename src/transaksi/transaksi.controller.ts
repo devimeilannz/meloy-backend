@@ -10,9 +10,11 @@ import {
   UseGuards,
   UseInterceptors,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
 
 import { FileInterceptor } from '@nestjs/platform-express';
+
 import {
   ApiBearerAuth,
   ApiTags,
@@ -28,6 +30,8 @@ import { TransaksiService } from './transaksi.service';
 import { CreateTransaksiDto } from './dto/create-transaksi.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 
+import type { Response } from 'express';
+
 @ApiTags('Transaksi')
 @ApiBearerAuth('access-token')
 @Controller('transaksi')
@@ -35,7 +39,7 @@ export class TransaksiController {
   constructor(private transaksiService: TransaksiService) {}
 
   // =========================
-  // CREATE TRANSAKSI (FIX SWAGGER)
+  // CREATE TRANSAKSI
   // =========================
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -46,10 +50,7 @@ export class TransaksiController {
       properties: {
         bookingId: { type: 'number' },
         total: { type: 'number' },
-        proof: {
-          type: 'string',
-          format: 'binary',
-        },
+        proof: { type: 'string', format: 'binary' },
       },
       required: ['bookingId', 'total', 'proof'],
     },
@@ -64,15 +65,11 @@ export class TransaksiController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: any,
   ) {
-    if (!file) {
-      throw new BadRequestException('Proof file is required');
-    }
-
     return this.transaksiService.create(body, file, req.user);
   }
 
   // =========================
-  // GET ALL
+  // GET ALL (ADMIN)
   // =========================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
@@ -91,15 +88,32 @@ export class TransaksiController {
   }
 
   // =========================
-  // GET REPORT
+  // REPORT
   // =========================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
   @Get('report')
   getReport() {
     return this.transaksiService.getReport();
   }
 
   // =========================
-  // GET DETAIL
+  // PRINT PDF (WAJIB DI ATAS :id)
+  // =========================
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/print')
+  print(@Param('id') id: string, @Res() res: Response) {
+    const parsedId = Number(id);
+
+    if (isNaN(parsedId)) {
+      throw new BadRequestException('Invalid ID');
+    }
+
+    return this.transaksiService.printTransaksi(parsedId, res);
+  }
+
+  // =========================
+  // DETAIL
   // =========================
   @UseGuards(JwtAuthGuard)
   @Get(':id')

@@ -10,13 +10,15 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
 import { PetsService } from './pets.service';
 import { JwtAuthGuard } from 'src/helper/jwt-auth.guard';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 
+@ApiTags('Pets')
 @ApiBearerAuth('access-token')
 @Controller('pets')
 export class PetsController {
@@ -37,7 +39,7 @@ export class PetsController {
   // =========================
   @Get('my')
   @UseGuards(JwtAuthGuard)
-  myPets(@Request() req) {
+  myPets(@Request() req: any) {
     return this.petsService.myPets(req.user.id);
   }
 
@@ -58,11 +60,15 @@ export class PetsController {
   }
 
   // =========================
-  // UPDATE PET
+  // UPDATE PET (FIX SWAGGER BODY)
   // =========================
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Body() body: UpdatePetDto, @Param('id') id: string) {
+  @ApiBody({ type: UpdatePetDto }) // 🔥 INI WAJIB
+  update(
+    @Body() body: UpdatePetDto,
+    @Param('id') id: string,
+  ) {
     return this.petsService.update(Number(id), body);
   }
 

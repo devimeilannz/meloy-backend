@@ -1,10 +1,19 @@
-import { PartialType }
-from '@nestjs/mapped-types';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, IsNumber } from 'class-validator';
 
-import { CreateGroomingPackageDto }
-from './create-grooming-package.dto';
+export class UpdateGroomingPackageDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-export class UpdateGroomingPackageDto
-extends PartialType(
-  CreateGroomingPackageDto,
-) {}
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  price?: number;
+}

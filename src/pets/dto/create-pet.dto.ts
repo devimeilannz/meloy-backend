@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsString } from 'class-validator';
+import { IsString, IsNumber } from 'class-validator';
 
 export class CreatePetDto {
   @ApiProperty()
@@ -11,6 +11,6 @@ export class CreatePetDto {
   type!: string;
 
   @ApiProperty()
-  @IsInt()
+  @IsNumber()
   age!: number;
 }

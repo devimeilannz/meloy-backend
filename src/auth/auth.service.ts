@@ -4,110 +4,76 @@ import {
 } from '@nestjs/common';
 
 import { JwtService } from '@nestjs/jwt';
-
 import * as bcrypt from 'bcrypt';
-
-import { PrismaService }
-from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
-
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
 
+  // =========================
+  // REGISTER
+  // =========================
   async register(data: any) {
-
-    const userExist =
-      await this.prisma.user.findUnique({
-        where: {
-          email: data.email,
-        },
-      });
+    const userExist = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
 
     if (userExist) {
-      throw new BadRequestException(
-        'Email already used',
-      );
+      throw new BadRequestException('Email already used');
     }
 
-    const hashed =
-      await bcrypt.hash(
-        data.password,
-        10,
-      );
+    const hashed = await bcrypt.hash(data.password, 10);
 
-    const user =
-  await this.prisma.user.create({
-    data: {
-      username: data.username,
-      email: data.email,
-      password: hashed,
-      role: data.role || 'CUSTOMER', 
-    },
-  });
-
-    return user;
-  }
-  async me(
-  userId: number,
-) {
-
-  return this.prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      role: true,
-      createdAt: true,
-    },
-  });
-}
-
-  async login(data: any) {
-
-    const user =
-      await this.prisma.user.findUnique({
-        where: {
-          email: data.email,
-        },
-      });
-
-    if (!user) {
-      throw new BadRequestException(
-        'User not found',
-      );
-    }
-
-    const valid =
-      await bcrypt.compare(
-        data.password,
-        user.password,
-      );
-
-    if (!valid) {
-      throw new BadRequestException(
-        'Wrong password',
-      );
-    }
-
-    const token =
-      this.jwtService.sign({
-        id: user.id,
-        role: user.role,
-        email: user.email,
-      });
+    const user = await this.prisma.user.create({
+      data: {
+        username: data.username,
+        email: data.email,
+        password: hashed,
+        role: data.role || 'CUSTOMER',
+      },
+    });
 
     return {
-      token,
-      user,
+      message: 'Register success',
+      data: user,
     };
   }
-  
+
+  // =========================
+  // LOGIN
+  // =========================
+  async login(data: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const valid = await bcrypt.compare(
+      data.password,
+      user.password,
+    );
+
+    if (!valid) {
+      throw new BadRequestException('Wrong password');
+    }
+
+    const token = this.jwtService.sign({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return {
+      message: 'Login success',
+      token,
+    };
+  }
+
 }
